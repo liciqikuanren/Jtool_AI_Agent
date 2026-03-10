@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find . -type f \\\\\\( -name \"*.py\" -o -name \"*.js\" -o -name \"*.ts\" -o -name \"*.json\" -o -name \"*.toml\" -o -name \"*.cfg\" -o -name \"*.ini\" -o -name \"Makefile\" -o -name \"*.sh\" \\\\\\) 2>/dev/null | head -50)",
+      "WebFetch(domain:www.jooiee.com)",
+      "Bash(python -c \"import sys; sys.path.insert\\(0, 'src'\\); from jtool import DevType, ErrorType; print\\('jtool module: OK'\\)\")",
+      "Bash(python -c \"import sys; sys.path.insert\\(0, '.'\\); from src.test_framework import InterfaceType, TestCase; print\\('test_framework module: OK'\\)\")",
+      "Bash(find . -name \"*.skill\" -o -name \"*skill*\" 2>/dev/null | head -20)",
+      "Bash(python jtool_skill.py --help)",
+      "Bash(chcp 65001)",
+      "Bash(python jtool_skill.py)",
+      "Bash(python jtool_skill.py scan)",
+      "WebSearch",
+      "Bash(claude --version 2>/dev/null || echo \"claude command not found\")",
+      "Bash(find . -type f -name \"*.py\" -o -name \"*.yaml\" -o -name \"*.md\" 2>/dev/null | head -50)",
+      "Bash(python -c \"\nimport sys\nsys.path.insert\\(0, '.claude/skills/jtool/scripts/src'\\)\nfrom jtool import DevType, devices_scan\n\nprint\\('测试 devices_scan 返回值:'\\)\nfor dev_type in [DevType.I2C, DevType.SPI, DevType.IO]:\n    devices = devices_scan\\(dev_type\\)\n    print\\(f'{dev_type.name}: {devices}'\\)\n    print\\(f'  数量: {len\\(devices\\)}, 唯一值: {len\\(set\\(devices\\)\\)}'\\)\n\")",
+      "Bash(python jtool_skill.py quick)"
+    ]
+  }
+}

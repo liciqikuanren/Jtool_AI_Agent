@@ -147,6 +147,9 @@ class JToolSkills:
         """步骤2: 检查数据手册"""
         self.print_header("步骤2: 数据手册检查")
 
+        # 获取主要datasheet目录（项目根目录）
+        primary_dir = self.datasheet_manager.get_primary_datasheet_dir()
+
         # 检查已有数据手册
         if self.check_datasheets():
             use_existing = self.get_input(
@@ -161,16 +164,20 @@ class JToolSkills:
                         "请选择数据手册:",
                         [d.name for d in datasheets]
                     )
-                    return str(self.datasheet_manager.DATASHEET_DIR / ds_name)
+                    # 查找选中的文件路径
+                    for ds in datasheets:
+                        if ds.name == ds_name:
+                            return str(ds)
+                    return str(datasheets[0])
 
         # 提示用户放置手册
         self.print_warning("未找到数据手册或选择不使用")
         self.print_info(f"请将数据手册放置到以下目录:")
-        print(f"  {self.datasheet_manager.DATASHEET_DIR}")
+        print(f"  {primary_dir}")
         print(f"\n支持的格式: PDF, TXT, 图片等")
 
         # 创建目录
-        self.datasheet_manager.DATASHEET_DIR.mkdir(parents=True, exist_ok=True)
+        primary_dir.mkdir(parents=True, exist_ok=True)
 
         # 询问是否已放置
         while True:
@@ -190,7 +197,10 @@ class JToolSkills:
                             "请选择数据手册:",
                             [d.name for d in datasheets]
                         )
-                        return str(self.datasheet_manager.DATASHEET_DIR / ds_name)
+                        for ds in datasheets:
+                            if ds.name == ds_name:
+                                return str(ds)
+                        return str(datasheets[0])
                 else:
                     self.print_error("仍未找到数据手册，请检查")
             else:

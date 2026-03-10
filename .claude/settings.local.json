@@ -14,7 +14,17 @@
       "Bash(claude --version 2>/dev/null || echo \"claude command not found\")",
       "Bash(find . -type f -name \"*.py\" -o -name \"*.yaml\" -o -name \"*.md\" 2>/dev/null | head -50)",
       "Bash(python -c \"\nimport sys\nsys.path.insert\\(0, '.claude/skills/jtool/scripts/src'\\)\nfrom jtool import DevType, devices_scan\n\nprint\\('测试 devices_scan 返回值:'\\)\nfor dev_type in [DevType.I2C, DevType.SPI, DevType.IO]:\n    devices = devices_scan\\(dev_type\\)\n    print\\(f'{dev_type.name}: {devices}'\\)\n    print\\(f'  数量: {len\\(devices\\)}, 唯一值: {len\\(set\\(devices\\)\\)}'\\)\n\")",
-      "Bash(python jtool_skill.py quick)"
+      "Bash(python jtool_skill.py quick)",
+      "Bash(python .claude/skills/jtool/scripts/src/test_tdc_gp22.py)",
+      "Bash(pip install:*)",
+      "Bash(python -c \"\nimport fitz\ndoc = fitz.open\\('datasheet/TDC_GP22.pdf'\\)\nwith open\\('tdc_gp22_content.txt', 'w', encoding='utf-8'\\) as f:\n    for i, page in enumerate\\(doc[:20]\\):\n        f.write\\(f'\\\\n=== PAGE {i+1} ===\\\\n'\\)\n        f.write\\(page.get_text\\(\\)\\)\nprint\\('PDF content extracted to tdc_gp22_content.txt'\\)\n\")",
+      "Bash(python -c \"\nimport fitz\ndoc = fitz.open\\('datasheet/TDC_GP22.pdf'\\)\nwith open\\('tdc_gp22_content_full.txt', 'w', encoding='utf-8'\\) as f:\n    for i, page in enumerate\\(doc\\):\n        f.write\\(f'\\\\n=== PAGE {i+1} ===\\\\n'\\)\n        f.write\\(page.get_text\\(\\)\\)\nprint\\(f'Extracted {len\\(doc\\)} pages to tdc_gp22_content_full.txt'\\)\n\")",
+      "Bash(cd .claude/skills/jtool/scripts/src && python test_tdc_gp22.py --mode basic)",
+      "Bash(cd .claude/skills/jtool/scripts/src && python test_tdc_gp22_connection.py)",
+      "Bash(python test_b5_write_read.py)",
+      "Bash(python test_fire_generator_off.py)",
+      "Bash(python test_tdc_periodic.py)",
+      "Bash(python test_ultrasonic_alternate.py)"
     ]
   }
 }

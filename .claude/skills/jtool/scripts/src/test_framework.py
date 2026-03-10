@@ -62,16 +62,67 @@ class ChipProfile:
 
 
 class DatasheetManager:
-    """数据手册管理器"""
+    """数据手册管理器
 
-    DATASHEET_DIR = Path(__file__).parent.parent / "assets" / "datasheet"
+    支持两个位置的 datasheet 目录:
+    1. 项目根目录的 datasheet/ (用户要求)
+    2. .claude/skills/jtool/assets/datasheet/ (skill目录)
+    """
+
+    # 原始skill目录
+    SKILL_DATASHEET_DIR = Path(__file__).parent.parent / "assets" / "datasheet"
+
+    @classmethod
+    def _get_project_datasheet_dir(cls) -> Path:
+        """获取项目根目录的datasheet路径"""
+        # 从当前文件向上查找项目根目录
+        current = Path(__file__).resolve()
+        # 向上查找，直到找到包含 datasheet 目录的项目根目录
+        for parent in current.parents:
+            project_ds = parent / "datasheet"
+            if project_ds.exists() and project_ds.is_dir():
+                return project_ds
+            # 同时检查是否在 .claude/skills/jtool 附近
+            if (parent / ".claude").exists():
+                project_ds = parent / "datasheet"
+                return project_ds
+        # 默认返回当前工作目录的 datasheet
+        return Path.cwd() / "datasheet"
 
     @classmethod
     def list_datasheets(cls) -> List[Path]:
-        """列出所有数据手册"""
-        if not cls.DATASHEET_DIR.exists():
-            return []
-        return list(cls.DATASHEET_DIR.glob("*"))
+        """列出所有数据手册（合并两个目录）"""
+        files = []
+
+        # 1. 检查项目根目录的 datasheet
+        project_dir = cls._get_project_datasheet_dir()
+        if project_dir.exists():
+            files.extend(project_dir.glob("*"))
+
+        # 2. 检查skill目录的 datasheet
+        if cls.SKILL_DATASHEET_DIR.exists():
+            files.extend(cls.SKILL_DATASHEET_DIR.glob("*"))
+
+        # 去重（按文件名）
+        seen = set()
+        unique_files = []
+        for f in files:
+            if f.is_file() and f.name not in seen:
+                seen.add(f.name)
+                unique_files.append(f)
+
+        return unique_files
+
+    @classmethod
+    def get_datasheet_paths(cls) -> List[Path]:
+        """获取所有可用的datasheet目录路径"""
+        paths = []
+        project_dir = cls._get_project_datasheet_dir()
+        if project_dir.exists():
+            paths.append(project_dir)
+        if cls.SKILL_DATASHEET_DIR.exists():
+            paths.append(cls.SKILL_DATASHEET_DIR)
+        return paths
 
     @classmethod
     def get_datasheet_info(cls, name: str) -> Optional[Dict]:
@@ -86,6 +137,14 @@ class DatasheetManager:
                     "suffix": f.suffix
                 }
         return None
+
+    @classmethod
+    def get_primary_datasheet_dir(cls) -> Path:
+        """获取主要的datasheet目录（推荐用户放置的位置）"""
+        project_dir = cls._get_project_datasheet_dir()
+        # 确保目录存在
+        project_dir.mkdir(parents=True, exist_ok=True)
+        return project_dir
 
 
 class TestPlanGenerator:

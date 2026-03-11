@@ -24,7 +24,20 @@
       "Bash(python test_b5_write_read.py)",
       "Bash(python test_fire_generator_off.py)",
       "Bash(python test_tdc_periodic.py)",
-      "Bash(python test_ultrasonic_alternate.py)"
+      "Bash(python test_ultrasonic_alternate.py)",
+      "Bash(python jtool_skill.py interactive --demo)",
+      "Bash(python jtool_skill.py interactive 2>&1 | head -80)",
+      "Bash(python jtool_skill.py --demo 2>&1 | head -60)",
+      "Bash(python jtool_skill.py --demo)",
+      "Bash(curl -sL \"https://www.jooiee.com/docs/docs/jtool.html\" 2>/dev/null | head -500)",
+      "Bash(wget -qO- \"https://www.jooiee.com/docs/docs/jtool.html\" 2>/dev/null | head -500)",
+      "Bash(mkdir -p .claude/skills/jtool/scripts && mkdir -p .claude/skills/jtool/references && mkdir -p datasheet)",
+      "Bash(python test_code/test_TDC_GP22_ultrasonic.py 2>&1)",
+      "Bash(.claude/skills/jtool/scripts/lib/jtool.exe spircmd:*)",
+      "Bash(.claude/skills/jtool/scripts/lib/jtool.exe spiwcmd:*)",
+      "Bash(python test_code/fire_continuous.py 2>&1)",
+      "Bash(.claude/skills/jtool/scripts/lib/jtool.exe spiwrite:*)",
+      "Bash(cd F:/Jooiee/Jtool_AI_Agent && python -c \"\nimport sys, os\nsys.path.insert\\(0, 'test_code'\\)\nos.chdir\\('F:/Jooiee/Jtool_AI_Agent'\\)\n\nfrom test_TDC_GP22_ultrasonic import TDC_GP22_Ultrasonic\n\ntester = TDC_GP22_Ultrasonic\\(device_id=0\\)\nresult = tester.configure_alternating_mode\\(pulse_count=20\\)\n\nprint\\('=== Fire 配置检查 ==='\\)\nprint\\(f'Reg 0 \\(ANZ_FIRE\\): {result[\\\\\"config\\\\\"].get\\(\\\\\"CONFIG_0\\\\\", {}\\)}'\\)\nprint\\(f'Reg 5 \\(CONF_FIRE\\): {result[\\\\\"config\\\\\"].get\\(\\\\\"CONFIG_5\\\\\", {}\\)}'\\)\nprint\\(\\)\nprint\\('=== 配置说明 ==='\\)\nprint\\('Reg 0 Byte 3 = 脉冲数高位 + DIV_FIRE'\\)\nprint\\('Reg 5 Byte 3 = 0x40 表示 FIRE_UP 使能 \\(Bit 30=1\\)'\\)\nprint\\(\\)\nprint\\('测量流程: Init\\(0x70\\) -> Start_TOF\\(0x01\\) -> Fire脉冲输出'\\)\n\" 2>&1)"
     ]
   }
 }

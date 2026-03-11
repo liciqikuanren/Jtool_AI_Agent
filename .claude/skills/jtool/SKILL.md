@@ -1,230 +1,139 @@
 ---
-name: jtool
-description: JTool USB适配器硬件测试Skill。当用户提到"测试芯片"、"JTool"、"硬件测试"、"模块测试"、"I2C测试"、"SPI测试"时触发。支持交互式询问芯片型号、管理datasheet手册、生成测试方案并执行测试。
+name: jtool-chip-tester
+description: 基于 jtool 硬件工具的芯片自动化测试 Skill。当用户需要测试芯片模块、读取/验证芯片寄存器、进行硬件连接测试时触发。支持解析 datasheet（PDF/Word/Markdown/HTML/扫描件）生成测试方案，并执行自动化测试。
 ---
 
-# JTool Skill - 硬件测试自动化
+# JTool 芯片自动化测试 Skill
 
-Claude Code Skill for JTool USB Adapter Hardware Testing
+## 触发场景
 
-## 核心功能（根据用户需求实现）
+当用户提到以下关键词时触发此 Skill：
+- "测试芯片"
+- "测试 [芯片型号]"
+- "读取寄存器"
+- "验证硬件"
+- "扫描 I2C"
+- "检测连接"
+- "jtool"
+- "硬件测试"
 
-### 1. 主动询问测试模块
-Skill 会主动询问用户想要测试的芯片/模块型号，并提供常见类型供选择：
-- EEPROM (AT24Cxx系列等)
-- 传感器 (温度/湿度/压力等)
-- ADC (模数转换器)
-- DAC (数模转换器)
-- Flash存储器 (SPI Flash)
-- GPIO扩展器
-- RTC实时时钟
+## 工作流程
 
-### 2. 数据手册管理
-- 提示用户将芯片手册(PDF/TXT)放置到 `datasheet/` 目录
-- 自动扫描并列出可用的数据手册
-- 支持使用已有手册或添加新手册
+### Step 1: 检查环境
 
-### 3. 测试功能选择
-根据芯片类型和手册，询问具体要测试的功能：
-- 连接测试
-- 基本读写测试
-- 页写入测试
-- 擦除测试
-- 自定义功能测试
+1. 自动查找 `datasheet` 文件夹（支持多种位置）
+2. 自动查找 jtool 可执行文件
+3. 检查 jtool 硬件设备是否连接
+4. 自动创建 `test_code/` 输出目录
 
-### 4. 自动生成测试方案并执行
-- 根据用户选择生成完整的测试用例
-- 自动连接JTool设备
-- 执行测试并输出结果报告
+### Step 2: 识别芯片
 
----
+1. 询问用户要测试的芯片型号
+2. 在 `datasheet` 文件夹中搜索匹配的文档
+3. 解析文档内容（支持 PDF/Word/Markdown/HTML，扫描件需 OCR）
 
-## 安装
+### Step 3: 生成测试方案
 
-1. 确保项目结构完整：
-```
-Jtool_AI_Agent/
-├── jtool_skill.py                    # Skill入口脚本（根目录）
-├── datasheet/                        # 芯片手册目录（根目录）⭐
-└── .claude/skills/jtool/
-    ├── jtool.yaml                    # Skill定义
-    ├── SKILL.md                      # 本文件
-    └── scripts/
-        ├── lib/
-        │   ├── jtool.dll             # JTool驱动
-        │   └── jtool.h               # 头文件
-        └── src/
-            ├── jtool.py              # DLL封装
-            ├── test_framework.py     # 测试框架
-            ├── jtool_skills.py       # 交互式工具
-            └── examples/             # 测试示例
-```
+根据 datasheet 分析，生成以下类型的测试方案：
+- **连接测试**: I2C/SPI 扫描、设备识别
+- **寄存器读取**: 读取芯片 ID、状态寄存器
+- **功能测试**: 根据芯片特性设计的功能验证
+- **写读验证**: 写入数据后读取验证
 
-2. **重要**: 将你的芯片数据手册(PDF/TXT)放入根目录的 `datasheet/` 文件夹
+### Step 4: 用户确认
 
----
+使用 `AskUserQuestion` 让用户选择要执行的测试方案。
 
-## 使用方法
+### Step 5: 执行测试
 
-### 方式1: 使用 /skills 命令
+调用 jtool CMD 或 DLL 执行测试，支持：
+- I2C 通信（读写、扫描）
+- SPI 通信（读写、命令）
+- IO 控制（高低电平、PWM、ADC）
 
-```bash
-# 启动交互式测试向导（推荐）
-/skills jtool
+### Step 6: 输出结果
 
-# 扫描设备
-/skills jtool scan
+- 生成测试代码（保存到 `test_code/test_[chipname].py`）
+- 生成测试报告（保存到 `test_code/report_[chipname]_[timestamp].md`）
+- 在对话中展示测试结果
 
-# 快速测试
-/skills jtool quick
-
-# 测试EEPROM
-/skills jtool test-eeprom
-
-# 测试Flash
-/skills jtool test-flash
-```
-
-### 方式2: 直接运行Python脚本
-
-```bash
-# 交互式模式（完整6步流程）
-python jtool_skill.py
-
-# 扫描设备
-python jtool_skill.py scan
-
-# 快速I2C测试
-python jtool_skill.py quick
-
-# 测试EEPROM (指定地址)
-python jtool_skill.py test-eeprom --addr 0x50
-```
-
----
-
-## 交互式测试流程（6步向导）
+## 目录结构
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  步骤1: 询问模块                                             │
-│  ├── 选择模块类型 (EEPROM/传感器/Flash等)                     │
-│  └── 输入具体芯片型号 (如 AT24C02, W25Q128)                   │
-├─────────────────────────────────────────────────────────────┤
-│  步骤2: 检查数据手册                                          │
-│  ├── 扫描 datasheet/ 目录                                    │
-│  ├── 提示用户放置手册 (如需要)                                 │
-│  └── 选择要使用的手册                                        │
-├─────────────────────────────────────────────────────────────┤
-│  步骤3: 选择通信接口                                          │
-│  ├── I2C (推荐用于EEPROM/传感器)                              │
-│  ├── SPI (推荐用于Flash/ADC)                                  │
-│  ├── GPIO                                                    │
-│  └── CAN                                                     │
-├─────────────────────────────────────────────────────────────┤
-│  步骤4: 选择测试功能                                          │
-│  ├── 根据芯片类型列出可用测试项                                │
-│  └── 用户选择要执行的测试                                     │
-├─────────────────────────────────────────────────────────────┤
-│  步骤5: 配置设备参数                                          │
-│  ├── I2C: 设备地址、页大小                                    │
-│  └── SPI: 模式、时钟频率                                      │
-├─────────────────────────────────────────────────────────────┤
-│  步骤6: 生成并执行测试                                        │
-│  ├── 自动生成测试方案                                        │
-│  ├── 执行测试                                                │
-│  └── 生成测试报告                                            │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Skill功能
-
-| 命令 | 说明 |
-|------|------|
-| `interactive` | 交互式测试向导（完整6步流程） |
-| `scan` | 扫描所有连接的JTool设备 |
-| `quick` | 快速I2C总线扫描和设备检测 |
-| `test-eeprom` | AT24C02 EEPROM完整测试 |
-| `test-flash` | W25Q SPI Flash完整测试 |
-
----
-
-## 扩展开发
-
-### 添加新的芯片测试模板
-
-编辑 `.claude/skills/jtool/scripts/src/test_framework.py`，在 `CHIP_TEMPLATES` 中添加：
-
-```python
-"my_chip": {
-    "interface": InterfaceType.I2C,
-    "test_cases": [
-        "连接测试",
-        "寄存器读取",
-        "功能测试"
-    ]
-}
-```
-
-### 添加新的测试用例生成器
-
-在 `TestPlanGenerator` 类中添加：
-
-```python
-@classmethod
-def _create_my_chip_test_case(cls, test_name: str, chip_info: Optional[Dict]) -> TestCase:
-    return TestCase(
-        name=test_name,
-        description="测试说明",
-        interface=InterfaceType.I2C,
-        setup_steps=[],
-        test_steps=[{"action": "i2c_write", ...}],
-        expected_result="期望结果"
-    )
-```
-
----
-
-## 文件结构
-
-```
-.
-├── jtool_skill.py                          # Skill入口（根目录）
-├── datasheet/                              # 芯片手册目录（根目录）⭐
+项目根目录/
+├── datasheet/                    # 芯片手册文件夹（用户放置）
 │   ├── AT24C02.pdf
-│   ├── W25Q128.pdf
+│   ├── W25Q128JV.pdf
 │   └── ...
+├── test_code/                    # 测试输出目录（自动生成）
+│   ├── test_[chip].py            # 生成的测试代码
+│   ├── report_[chip]_[time].md   # 生成的测试报告
+│   └── test_example.py           # 示例代码
 └── .claude/skills/jtool/
-    ├── jtool.yaml                          # Skill定义
-    ├── SKILL.md                            # 本文件
-    └── scripts/
-        ├── lib/
-        │   ├── jtool.dll                   # JTool驱动
-        │   └── jtool.h                     # 头文件
-        └── src/
-            ├── jtool.py                    # DLL封装
-            ├── test_framework.py           # 测试框架
-            ├── jtool_skills.py             # 交互式工具（6步向导）
-            ├── scan_devices.py             # 设备扫描
-            ├── README.md                   # 源码文档
-            └── examples/
-                ├── test_eeprom_at24c02.py  # EEPROM测试
-                └── test_flash_w25q.py      # Flash测试
+    ├── SKILL.md                  # 本文件
+    ├── scripts/
+    │   ├── __init__.py
+    │   ├── chip_tester.py        # 主测试逻辑
+    │   ├── datasheet_parser.py   # 文档解析器
+    │   ├── test_executor.py      # 测试执行器
+    │   ├── jtool_api.py          # jtool DLL 封装
+    │   └── path_resolver.py      # 路径解析器（自动查找资源）
+    └── references/
+        └── jtool_manual.md       # jtool 完整手册参考
 ```
 
----
+## 路径解析（自动查找）
+
+Skill 使用 `path_resolver.py` 自动查找资源，无需硬编码路径：
+
+### 自动查找 jtool
+1. 检查 `.claude/skills/jtool/scripts/lib/jtool.exe`
+2. 检查 `skills/jtool/scripts/lib/jtool.exe`
+3. 检查系统 PATH 中的 `jtool`
+
+### 自动查找 datasheet
+1. 检查 `datasheet/`
+2. 检查 `datasheets/`
+3. 检查 `docs/datasheet/`
+
+### 自动创建输出目录
+- 自动在项目根目录创建 `test_code/` 文件夹
+
+## 使用示例
+
+**用户输入**: "帮我测试一下 AT24C02 EEPROM 芯片"
+
+**Skill 响应**:
+1. 自动检查环境（jtool、datasheet、输出目录）
+2. 在 datasheet 文件夹找到 AT24C02.pdf
+3. 解析文档，识别芯片特性：
+   - I2C 通信，地址 0xA0
+   - 256 字节容量
+   - 8 字节页大小
+4. 生成测试方案：
+   - I2C 连接扫描
+   - 读取 Device ID
+   - 写入/读取验证
+5. 用户选择执行
+6. 调用 jtool 执行测试
+7. 输出结果和报告到 `test_code/` 目录
 
 ## 依赖
 
-- Python 3.7+
-- Windows系统（JTool DLL为Windows x64版本）
-- JTool USB适配器硬件
+- Python 3.8+
+- jtool.dll/exe（已放在 scripts/lib/ 目录或系统 PATH）
+- 文档解析库：PyPDF2, python-docx, markdown, beautifulsoup4
+- OCR：pytesseract（可选，用于扫描件）
+
+## 跨平台兼容性
+
+- **Windows**: 自动查找 `.exe` 文件
+- **Linux/macOS**: 自动查找系统 PATH 中的 jtool
+- **路径处理**: 使用 `pathlib` 处理不同系统的路径分隔符
 
 ## 注意事项
 
-1. 确保JTool设备已正确连接到USB
-2. 确保目标芯片已正确连接到JTool适配器
-3. 将芯片数据手册放置到 `datasheet/` 目录以获得更好体验
-4. 部分测试会修改设备数据，请谨慎在生产环境使用
+1. 确保 jtool 硬件设备已连接
+2. datasheet 文件名应包含芯片型号以便匹配
+3. 扫描件需要安装 Tesseract OCR 引擎
+4. 生成的测试代码使用 ASCII 字符，避免编码问题

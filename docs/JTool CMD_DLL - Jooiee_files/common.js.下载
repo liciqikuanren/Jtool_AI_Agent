@@ -1,0 +1,137 @@
+$(function () {
+
+    //切换菜单按钮
+    $(document).on("click", ".menu-button", function () {
+        $(".sidebar").toggleClass("open");
+    });
+
+    $(document).on("click", ".sidebar ul li em", function () {
+        var classname = $(this).parent().hasClass("expanded") ? "collapsed" : "expanded";
+        $(this).parent().removeClass("collapsed expanded").addClass(classname);
+    });
+
+    if (DOCS.PAGE_TYPE) {
+        if (parseInt(DOCS.TOC_STATE) === 1) {
+            var toc = $("<div />").addClass("toc");
+            if (DOCS.TOC_POSITION == 'left') {
+                toc.insertAfter($(".sidebar .list a.selected:last"));
+            } else {
+                toc.html('<h4>目录</h4>');
+                $(".content").append(toc);
+            }
+            if ($(".content h2,.content h3").length > 0) {
+                toc.initTOC({
+                    selector: DOCS.TOC_SELECTOR,
+                    scope: '.content',
+                    overwrite: true,
+                    prefix: 'toc'
+                });
+                toc.removeClass("hidden");
+            } else {
+                toc.addClass("hidden");
+            }
+
+            $('.content pre code').each(function (i, block) {
+                hljs.highlightElement(block);
+            });
+        }
+
+        if ($(window).scrollTop() > 0) {
+            $(window).trigger("scroll");
+        }
+
+        if (location.hash.match(/^\#toc\-\d+$/)) {
+            setTimeout(function () {
+                $(".toc").data("scroll").animateScroll($(location.hash)[0]);
+            }, 0);
+        }
+    }
+
+    var st, ajax;
+    var searchInput = $(".search-input"), searchResult = $(".search-result");
+
+    //搜索
+    searchInput.on("focus keyup", function () {
+        var that = this;
+        var keywords = $(that).val();
+        if (keywords.length === 0) {
+            searchResult.hide();
+            return;
+        }
+        if (searchResult.is(":visible") && keywords === $(that).data("keywords")) {
+            return;
+        }
+        try {
+            clearTimeout(st);
+            ajax && ajax.abort();
+        } catch (e) {
+
+        }
+        var keywordsReg = new RegExp(keywords, "i");
+        var keywordsReplace = function (match) {
+            return "<em>" + match + "</em>";
+        };
+
+        st = setTimeout(function () {
+            ajax = $.ajax({
+                url: DOCS.SEARCH_URL,
+                dataType: "json",
+                cache: true,
+                data: {keywords: keywords, type: DOCS.PAGE_TYPE},
+                success: function (ret) {
+                    var html = [], contentIndex, contentText;
+                    if (ret.length > 0) {
+                        $.each(ret, function (i, item) {
+                            if (DOCS.SEARCH_SCOPE === 'type' && item.type !== DOCS.PAGE_TYPE) {
+                                return true;
+                            }
+                            if (item.title.search(keywordsReg) > -1 || item.content.search(keywordsReg) > -1) {
+                                contentIndex = item.content.indexOf(keywords);
+                                if (contentIndex > -1 && item.content.length > 100) {
+                                    contentText = item.content.substr(Math.max(0, contentIndex - 30), 100);
+                                } else {
+                                    contentText = item.content.substr(0, 100);
+                                }
+                                contentText = contentText.replace(keywordsReg, keywordsReplace);
+                                if (DOCS.MODE === 'html') {
+                                    item.url = item.type === DOCS.PAGE_TYPE ? "./" + item.url : "../" + item.url;
+                                }
+                                html.push("<li><a href='" + item.url + "'><h3>" + item.title.replace(keywordsReg, keywordsReplace) + "</h3><p>" + contentText + "</p></a></li>");
+                            }
+                        });
+                    }
+                    if (html.length === 0) {
+                        html.push("<li>未找到匹配搜索结果</li>");
+                    }
+                    searchResult.html("<ul>" + html.join("") + "</ul>").show();
+                    $(that).data("keywords", keywords);
+                }, error: function (e) {
+                    console.error(e);
+                }
+            });
+        }, 250);
+    });
+
+    //搜索外点击
+    $(document).on("click", function (e) {
+        if ([searchInput[0], searchResult[0]].indexOf(e.target) === -1) {
+            if (searchResult.is(":visible")) {
+                searchResult.hide();
+            }
+        }
+    });
+
+    //返回顶部
+    $(document).on("click", ".backtotop", function () {
+        $('body,html').animate({scrollTop: 0}, 300);
+    });
+
+    //滚动后显示返回顶部
+    $(window).scroll(function () {
+        if ($(this).scrollTop() > $("#header").height() + 200) {
+            $(".backtotop").fadeIn();
+        } else {
+            $(".backtotop").fadeOut();
+        }
+    });
+});
